@@ -1,0 +1,25 @@
+Requirements:
+
+1. Users can get some cash out of the machine
+2. User can put card, and if details are valid, get cash out of it
+3. Lot of machines can be there, so soln should be generic
+
+
+basic impl:
+
+class ATM{
+    public:
+    void insertcard();
+    void readpin();
+    void readcard();
+    voud validatepin();
+    void withdrawcash();
+    void eject();
+    void canceltransaction();
+}
+
+// S AND O violated if it is like this in a single class
+
+Obsv:
+
+// there are lots of states, involved here. 
