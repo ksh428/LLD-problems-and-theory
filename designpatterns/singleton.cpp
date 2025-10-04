@@ -10,6 +10,7 @@ class Logger
 {
     static Logger* logger;
     static int instance_count;
+    static mutex mtx;
     Logger() {
         instance_count++;
         cout << "Logger instance created. Total instances: " << instance_count << endl; 
@@ -17,10 +18,12 @@ class Logger
 public:
     static Logger* getInstance()
     {
+        mtx.lock();
         if(Logger::logger == nullptr)
         {
             logger = new Logger();
         }
+        mtx.unlock();
         return logger;
     }
 
@@ -34,6 +37,7 @@ public:
 };
 Logger* Logger::logger = nullptr; // Initialize static member
 int Logger::instance_count = 0; // Initialize static member
+mutex Logger::mtx;
 
 void user1()
 {
