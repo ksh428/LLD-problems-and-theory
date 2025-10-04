@@ -1,62 +1,80 @@
 #include <iostream>
-
+#include <thread>
+#include <mutex>
 using namespace std;
 
-class Vehicle
-{
+class Button{
     public:
-    virtual void drive()=0;
+    virtual void getButton()=0;
 };
-
-class Honda : public Vehicle
+class KeyBoard{
+    public:
+    virtual void getKeyboard()=0;
+};
+class WinButton:public Button
 {
     public:
-    void drive() override {
-        cout << "Driving a Honda civic!" << endl;
+    void getButton()
+    {
+        cout<<"windows button";
     }
 };
-
-class Toyota : public Vehicle
+class WinKeyboard:public KeyBoard
 {
     public:
-    void drive() override {
-        cout << "Driving a Toyota!" << endl;
+    void getKeyboard()
+    {
+        cout<<"windows Keyboard";
     }
 };
-
-class VehicleFactory
+class MacButton:public Button
 {
     public:
-    virtual Vehicle* getVehicle(const string &name) = 0;
-};
-
-class ToyotaFactory : public VehicleFactory
-{
-    public:
-     Vehicle* getVehicle(const string &name){
-        return new Toyota();
+    void getButton()
+    {
+        cout<<"Mac button";
     }
 };
-
-class HondaFactory : public VehicleFactory
+class MacKeyboard:public KeyBoard
 {
     public:
-     Vehicle* getVehicle(const string &name){
-        return new Honda();
+    void getKeyboard()
+    {
+        cout<<"Mac Keyboard";
+    }
+};
+class UIFactory{
+    public:
+    virtual Button* getUIButton()=0;
+    virtual KeyBoard* getUIKeyboard()=0;
+};
+class WinFactory:public UIFactory{
+    public:
+    Button* getUIButton()
+    {
+        return new WinButton();
+    }
+    KeyBoard* getUIKeyboard()
+    {
+        return new WinKeyboard();
+    }
+};
+class MacFactory:public UIFactory{
+    public:
+    Button* getUIButton()
+    {
+        return new MacButton();
+    }
+    KeyBoard* getUIKeyboard()
+    {
+        return new MacKeyboard();
     }
 };
 
 int main()
 {
-    VehicleFactory *factory = new HondaFactory();
-    Vehicle *vehicle = factory->getVehicle("Honda");
-    vehicle->drive();
-
-    // create toyota
-    delete vehicle; // Clean up the Honda vehicle
-    factory = new ToyotaFactory();
-    vehicle = factory->getVehicle("Toyota");
-    vehicle->drive();
+    UIFactory* winfact=new WinFactory();
+    winfact->getUIButton()->getButton();
+    winfact->getUIKeyboard()->getKeyboard();
     
-    return 0;
 }
