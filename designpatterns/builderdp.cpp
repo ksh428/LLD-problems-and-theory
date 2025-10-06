@@ -1,79 +1,87 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-class Car{
-    private:
-    string name;
-    string color;
+#include <iostream>
+#include <thread>
+#include <mutex>
+using namespace std;
+
+class Desktop{
+    string keyboard;
+    string mouse;
     public:
-    string getName()
-    {
-        return name;
+    void setkeyboard(string kb){
+        keyboard=kb;
     }
-    string getColor()
+    void setmouse(string m)
     {
-        return color;
+        mouse=m;
     }
-    void setName(string pname)
+    string getkeyboard() {return keyboard;}
+    string getmouse() {return mouse;}
+};
+class DesktopBuilder{
+    public:
+    virtual void buildkeyboard()=0;
+    virtual void buildmouse()=0;
+    virtual Desktop* getDesktop()=0;
+};
+class HPBuilder: public DesktopBuilder{
+    Desktop* desktop=nullptr;
+    public:
+    HPBuilder()
     {
-        name=pname;
+        desktop=new Desktop();
     }
-    void setColor(string pcolor)
+    void buildkeyboard()
     {
-        color=pcolor;
+        desktop->setkeyboard("hp kb");
+    }
+    void buildmouse()
+    {
+        desktop->setmouse("hp mouse");
+    }
+    Desktop* getDesktop()
+    {
+        return desktop;
     }
 };
-
-class Carbuilder
-{
+class DellBuilder: public DesktopBuilder{
+    Desktop* desktop=nullptr;
     public:
-    virtual void buildName(string name)=0;
-    virtual void buildColor(string color)=0;
-    virtual Car getCar()=0;
-};
-
-class BMWBuilder:public Carbuilder
-{
-    private:
-    Car car;
-    public:
-    BMWBuilder()
+    DellBuilder()
     {
-        car=Car();
+        desktop=new Desktop();
     }
-    void buildName(string name) 
+    void buildkeyboard()
     {
-        car.setName(name);
+        desktop->setkeyboard("Dell kb");
     }
-    void buildColor(string color) 
+    void buildmouse()
     {
-        car.setColor(color);
+        desktop->setmouse("Dell mouse");
     }
-    Car getCar() 
+    Desktop* getDesktop()
     {
-        return car;
+        return desktop;
     }
 };
-
-class CarDirector{
+class DesktopDirector{
     public:
-    Car createCar(Carbuilder& cb)
+    static Desktop* getDesktop(DesktopBuilder* builder)
     {
-        cb.buildName("BMW CAR");
-        cb.buildColor("Red");
-        return cb.getCar();
+        builder->buildkeyboard();
+        builder->buildmouse();
+        return builder->getDesktop();
     }
 };
 
 int main()
 {
-    CarDirector dir;
-    BMWBuilder bmw;
-    Car bmwcar=dir.createCar(bmw);
-    cout<<bmwcar.getName()<<" "<<bmwcar.getColor();
-    return 0;
+    DesktopBuilder* b=new HPBuilder();
+    Desktop* hpdesk=DesktopDirector::getDesktop(b);
+    std::cout<<hpdesk->getkeyboard()<<" "<<hpdesk->getmouse();   
 }
-
 // other example
 #include<bits/stdc++.h>
 using namespace std;
