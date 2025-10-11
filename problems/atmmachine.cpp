@@ -1,171 +1,193 @@
 #include <bits/stdc++.h>
-
+#include <mutex>
 using namespace std;
 
-//state design pattern
-class ATMState{ // ex: READY,WITHDRAWING,EJECTING etc
-    public:
-    virtual void InsertCard()=0;
-    virtual void EjectCard()=0;
-    virtual string GetStateName()=0;
-    virtual void Cancel()=0;
-    virtual void enterState()=0;
-    virtual void RequestCash()=0;
-    virtual void enterpin(string pin)=0;
+// ------------------- USER -------------------
+class User {
+    int id;
+public:
+    User(int i) : id(i) {}
+    int getid() { return id; }
 };
 
-// database's
-
-class DatabaseRepository{
-    private:
-    // data.emplace_back(std::initializer_list<std::string>{"001", "1234", "init"});
-
-    public:
-    string fetchATMDetails(string atmid); // returns the state of the atm
-    void updateBalance();
-    void updatedetails(string id,string state);
+// ------------------- CARD INTERFACE -------------------
+class ICard {
+public:
+    virtual string cardtype() = 0;
+    virtual User* getuser() = 0;
+    virtual string getcardno() = 0;
+    virtual ~ICard() = default;
 };
 
-class ATM{
-    string id;
-    ATMState* state;
-    DatabaseRepository* repo;
-    public:
-    ATM(string atmid,DatabaseRepository* db)
-    {
-        id=atmid;
-        repo=db;
-        string currstate=repo->fetchATMDetails(id);
-        //initialize the states
+// ------------------- DEBIT CARD -------------------
+class DebitCard : public ICard {
+    User* u;
+    string cardno;
+public:
+    DebitCard(User* u1, string c) : u(u1), cardno(c) {}
+    string cardtype() override { return "debit"; }
+    User* getuser() override { return u; }
+    string getcardno() override { return cardno; }
+};
+
+// ------------------- CREDIT CARD -------------------
+class CreditCard : public ICard {
+    User* u;
+    string cardno;
+public:
+    CreditCard(User* u1, string c) : u(u1), cardno(c) {}
+    string cardtype() override { return "credit"; }
+    User* getuser() override { return u; }
+    string getcardno() override { return cardno; }
+};
+
+// ------------------- BANK SERVER (Mock) -------------------
+class BankServer {
+public:
+    static int checkbal(const string& cardno) {
+        // Mock: Just return a random balance
+        cout << "[BankServer] Checking balance for card: " << cardno << endl;
+        return 5000; 
     }
-    void setState(ATMState* st)
-    {
-        state=st;
-        state->enterState();
-        repo->updatedetails(id,state->GetStateName());
-    }
-    bool pincorrect(string pin){
-        // logic to check whether the pin is correct or not
-    }
-    void insertcard(){
-        state->InsertCard();
-    }
-    void eject(){
-        state->EjectCard();
-    }
-    void cancel(){
-        state->Cancel();
-    }
-    void requestcash(){
-        state->RequestCash();
+
+    static int getpin(const string& cardno) {
+        // Mock: Return a constant pin for simplicity
+        return 1234;
     }
 };
-// factory for state
-class StateFactory{
-    public:
-    static ATMState* getState(ATM* a,string state)
-    {
-        if(state=="ready")
-        {
-            return new ReadyState(a);
-        }else if(state=="reading")
-        {
-            return new ReadingState(a);
-        }else if(state == "cancel")
-        {
-            return new CancelState(a);
+
+// Forward declaration
+class ATMmachine;
+
+// ------------------- ATM STATE INTERFACE -------------------
+class ATMstate {
+public:
+    virtual string getstate() = 0;
+    virtual ~ATMstate() = default;
+};
+
+// ------------------- SPECIFIC STATES -------------------
+class NotProcessing : public ATMstate {
+public:
+    string getstate() override { return "NotProcessing"; }
+};
+
+class Processing : public ATMstate {
+public:
+    string getstate() override { return "Processing"; }
+};
+
+class Failed : public ATMstate {
+public:
+    string getstate() override { return "Failed"; }
+};
+
+class Succeeded : public ATMstate {
+public:
+    string getstate() override { return "Succeeded"; }
+};
+
+// ------------------- ATM MACHINE -------------------
+class ATMmachine {
+    ATMstate* currstate;
+    ICard* card;
+    bool ispinvalid = false;
+    int retrycnt = 0;
+
+public:
+    ATMmachine() {
+        currstate = new NotProcessing();
+        card = nullptr;
+    }
+
+    ~ATMmachine() {
+        if (currstate) delete currstate;
+    }
+
+    ATMstate* getstate() { return currstate; }
+
+    void insertcard(ICard* c) {
+        card = c;
+        currstate = new Processing();
+        cout << "[ATM] Card inserted (" << card->cardtype() << ")\n";
+        cout << "Please enter your PIN:\n";
+    }
+
+    void enterpin(int no) {
+        if (currstate->getstate() != "Processing") {
+            cout << "[ATM] Invalid state. Please insert card first.\n";
+            return;
+        }
+
+        string cardno = card->getcardno();
+        int correctpin = BankServer::getpin(cardno);
+
+        if (validatepin(no, correctpin)) {
+            cout << "[ATM] PIN validated successfully. Please select an option.\n";
+            ispinvalid = true;
+        } else {
+            retrycnt++;
+            if (retrycnt < 3)
+                cout << "[ATM] Incorrect PIN. Try again (" << retrycnt << "/3)\n";
+            else {
+                cout << "[ATM] Too many wrong attempts. Ejecting card.\n";
+                eject();
+            }
         }
     }
-};
 
-class ReadyState:public ATMState{
-    ATM* atm;
-    public:
-    ReadyState(ATM* a):atm(a) {}
-    string GetStateName()
-    {
-        return "ready";
-    }
-    void InsertCard(){
-        cout<<"inserted card, moving to reading"<<endl;
-        atm->setState(StateFactory::getState(a,"reading"));
-    }
-    void EjectCard(){
-        cout<<"eject not supported in ready state"<<endl;
-    }
-    void Cancel(){
-        cout<<"eject not supported in ready state"<<endl;
-    }
-    void enterpin(string pin)
-    {
-        cout<<"not supported"<<endl;
-    }
-    // list the supported and not support
-};
+    void selectoption(int op) {
+        if (!ispinvalid) {
+            cout << "[ATM] Enter a valid PIN first.\n";
+            return;
+        }
 
-class ReadingState:public ATMState{
-    ATM* atm;
-    public:
-    ReadingState(ATM* a):atm(a) {}
-    string GetStateName()
-    {
-        return "reading";
-    }
-    void InsertCard(){
-        cout<<"not suported"<<endl;
-    }
-    void EjectCard(){
-        cout<<"ejected,moved to ready state"<<endl;
-        atm->setState(StateFactory::getState(a,"ready"));
-    }
-    void Cancel(){
-        cout<<"cancelled,moved to cancel state"<<endl;
-        atm->setState(StateFactory::getState(a,"cancel"));
-    }
-    void enterpin(string pin)
-    {
-        if(atm->pincorrect(pin))
-        {
-            atm->setState(new CashWithdrawl());
-        }else{
-            atm->setState(new ReadyState());
+        if (op == 1) {
+            int bal = checkbalance();
+            cout << "[ATM] Available balance: " << bal << " Rs\n";
+        } else if (op == 2) {
+            withdrawcash();
+        } else {
+            cout << "[ATM] Invalid option selected.\n";
         }
     }
-    // list the supported and not support
-};
-class CashWithdrawl:public ATMState{
-    ATM* atm;
-    public:
-    CashWithdrawl(ATM* a):atm(a) {}
-    string GetStateName()
-    {
-        return "reading";
+
+    int checkbalance() {
+        string cardno = card->getcardno();
+        return BankServer::checkbal(cardno);
     }
-    void InsertCard(){
-        cout<<"not suported"<<endl;
+
+    void withdrawcash() {
+        cout << "[ATM] Withdrawing cash...\n";
+        currstate = new Succeeded();
+        cout << "[ATM] Transaction successful. Please collect your cash.\n";
     }
-    void EjectCard(){
-        cout<<"ejected,moved to ready state"<<endl;
-        atm->setState(StateFactory::getState(a,"ready"));
+
+    bool validatepin(int n1, int n2) {
+        return n1 == n2;
     }
-    void Cancel(){
-        cout<<"cancelled,moved to cancel state"<<endl;
-        atm->setState(StateFactory::getState(a,"cancel"));
+
+    void eject() {
+        cout << "[ATM] Ejecting card...\n";
+        currstate = new Failed();
+        card = nullptr;
+        ispinvalid = false;
+        retrycnt = 0;
+        currstate = new NotProcessing();
     }
-    void enterpin(string pin)
-    {
-        if(atm->pincorrect(pin))
-        {
-            atm->setState(new CashWithdrawl());
-        }else{
-            atm->setState(new ReadyState());
-        }
-    }
-    // list the supported and not support
 };
 
-int main()
-{
-    
-    return 0;
+// ------------------- MAIN -------------------
+int main() {
+    User* u1 = new User(101);
+    ICard* c1 = new DebitCard(u1, "1234-5678-9012");
+
+    ATMmachine* atm = new ATMmachine();
+
+    atm->insertcard(c1);
+    atm->enterpin(123);   // wrong pin
+    atm->enterpin(1111);  // wrong pin
+    atm->enterpin(1234);  // correct pin
+    atm->selectoption(1); // check balance
+    atm->selectoption(2); // withdraw
 }

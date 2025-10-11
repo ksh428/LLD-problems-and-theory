@@ -230,241 +230,222 @@ int main() {
 #include <mutex>
 using namespace std;
 
-enum Symbol{
+enum Symbol {
     X,
     O
 };
 
-class Player{
+class Player {
     int id;
     Symbol s;
-    public:
-    Player(int i,Symbol s1):id(i),s(s1){};
-    int getid() const
-    {
-        return id;
-    }
-    Symbol getsymbol() const
-    {
-        return s;
-    }
+public:
+    Player(int i, Symbol s1) : id(i), s(s1) {}
+    int getid() const { return id; }
+    Symbol getsymbol() const { return s; }
 };
 
-class Cell{
+class Cell {
     int r;
     int c;
-    int id;
-    public:
-    Cell(int pr,int pc,int i){
-        r=pr;
-        c=pc;
-        id=i;
-    }
-    int getid() {return id;}
-    pair<int,int> getrc()
-    {
-        return {r,c};
-    }
+    int id; // stores player id, -1 if empty
+public:
+    Cell(int pr = 0, int pc = 0, int i = -1) : r(pr), c(pc), id(i) {}
+    int getid() const { return id; }
+    void setid(int i) { id = i; }
+    pair<int, int> getrc() const { return {r, c}; }
 };
-class Board{
+
+class Board {
     int n;
-    vector<vector<Cell>>cells;
-    public:
-    Board(int sz=3)
-    {
-        n=sz;
-        for(int i=0;i<n;i++)
-        {
-            vector<Cell>r;
-            for(int j=0;j<n;j++)
-            {
-                Cell c1(i,j,-1);
-                r.push_back(c1);
-            }
-            cells.push_back(r);
-        }
-    }
-    vector<vector<Cell>> getcells()
-    {
-        return cells;
-    }
-    bool isend()
-    {
-        for(int i=0;i<n;i++)
-        {
-            for(int j=0;j<n;j++)
-            {
-                if(cells[i][j]==-1) return 0;
+    vector<vector<Cell>> cells;
+public:
+    Board(int sz = 3) {
+        n = sz;
+        cells.resize(n, vector<Cell>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cells[i][j] = Cell(i, j, -1);
             }
         }
-        return 1;
     }
-    bool checkandinsert(int r,int c,int p)
-    {
-        if(cells[r][c]==-1)
-        {
-            cells[r][c]=p;
-            return 1;
+
+    vector<vector<Cell>> getcells() const { return cells; }
+
+    bool isend() const {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (cells[i][j].getid() == -1)
+                    return false;
+            }
         }
-        return 0;
+        return true;
     }
-    bool checkWinner(const int p) const {
+
+    bool checkandinsert(int r, int c, int p) {
+        if (r < 0 || c < 0 || r >= n || c >= n) return false;
+        if (cells[r][c].getid() == -1) {
+            cells[r][c].setid(p);
+            return true;
+        }
+        return false;
+    }
+
+    bool checkWinner(int p) const {
         // Rows
-        for (int i=0; i<n; ++i) {
+        for (int i = 0; i < n; ++i) {
             bool win = true;
-            for (int j=0; j<n; ++j) {
-                int occ = grid[i][j].getid();
-                if (occ==-1 || occ!= p) { win = false; break; }
+            for (int j = 0; j < n; ++j) {
+                int occ = cells[i][j].getid();
+                if (occ == -1 || occ != p) { win = false; break; }
             }
             if (win) return true;
         }
-        // Cols
-        for (int j=0; j<n; ++j) {
+
+        // Columns
+        for (int j = 0; j < n; ++j) {
             bool win = true;
-            for (int i=0; i<n; ++i) {
-                int occ = grid[i][j].getid();
-                if (occ==-1 || occ!= p) { win = false; break; }
+            for (int i = 0; i < n; ++i) {
+                int occ = cells[i][j].getid();
+                if (occ == -1 || occ != p) { win = false; break; }
             }
             if (win) return true;
         }
+
         // Diagonals
         bool diag1 = true, diag2 = true;
-        for (int i=0; i<n; ++i) {
-            int occ1 = grid[i][i].getid();
-            int occ2 = grid[i][n-1-i].getid();
-            if (occ1==-1 || occ1 != p) diag1 = false;
-            if (occ2 ==-1 || occ2 != p) diag2 = false;
+        for (int i = 0; i < n; ++i) {
+            int occ1 = cells[i][i].getid();
+            int occ2 = cells[i][n - 1 - i].getid();
+            if (occ1 == -1 || occ1 != p) diag1 = false;
+            if (occ2 == -1 || occ2 != p) diag2 = false;
         }
+
         return diag1 || diag2;
     }
+
     void print() const {
-        for (int i=0; i<n; ++i) {
-            for (int j=0; j<n; ++j) {
-                int occ = grid[i][j].getid();
-                if (occ==-1) cout << "- ";
-                else cout << (occ == 1 ? "X " : "O ");
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                int occ = cells[i][j].getid();
+                if (occ == -1) cout << "- ";
+                else cout << (occ == 0 ? "X " : "O ");
             }
             cout << "\n";
         }
         cout << endl;
     }
 };
-class IState{
-    public:
-    virtual string getstate()=0;
-    virtual void makemove(Game* g, int r,int c)=0;
+
+// Forward declaration for State classes
+class Game;
+
+class IState {
+public:
+    virtual string getstate() = 0;
+    virtual void makemove(Game* g, int r, int c) = 0;
+    virtual ~IState() = default;
 };
-class Notstarted:public IState{
-    public:
-    string getstate()
-    {
-        return "not started";
-    }
-    void makemove(Game*g,int r,int c)
-    {
-        g->startgame();
-        cout<<"Game started "<<endl;
-        g->makemove();
-    }
+
+class Notstarted : public IState {
+public:
+    string getstate() override { return "Not Started"; }
+
+    void makemove(Game* g, int r, int c) override;
 };
-class Playing:public IState{
-    public:
-    string getstate()
-    {
-        return "Playing";
-    }
-    void makemove(Game*g,int r,int c)
-    {
-        Board *b =g->getboard();
-        if(!b->checkandinsert())
-        {
-            cout<<"invalid move, try again"<<endl;
-            return;
-        }
-        b->print();
-        int p=g->getcurrplayerid();
-        if(b->checkwinner(p))
-        {
-            cout<<"player "<<p<<" has won the game"<<endl;
-            g->endgame();
-            cout<<"game ended"<<endl;
-        }
-        if(b->isend())
-        {
-            g->endgame();
-            cout<<"game ended in draw"<<endl;
-            return;
-        }
-        g->switchturn();
+
+class Playing : public IState {
+public:
+    string getstate() override { return "Playing"; }
+    void makemove(Game* g, int r, int c) override;
+};
+
+class End : public IState {
+public:
+    string getstate() override { return "End"; }
+    void makemove(Game* g, int r, int c) override {
+        cout << "Game has ended, cannot make a move\n";
     }
 };
-class End:public IState{
-    public:
-    string getstate()
-    {
-        return "end";
-    }
-    void makemove(Game* g,int r,int c)
-    {
-        cout<"game has ended, cannot make this move"<<endl;
-        return;
-    }
-};
-class Game{
+
+class Game {
     static Game* gameinstance;
     static mutex mtx;
+
     IState* currstate;
     Board* b;
     int turn;
-    Game()
-    {
-        gameinstance->b=new Board();
-        gameinstance->currstate=new Notstarted();
-        turn =0;
+
+    Game() {
+        b = new Board();
+        currstate = new Notstarted();
+        turn = 0;
     }
-    public:
-    int getcurrplayerid() { return turn; }
-    Board* getboard() {return b;}
-    string getgamestate() const
-    {
-        return currstate->getstate();
-    }
-    static Game* creategame()
-    {
-        mtx.lock();
-        if(gameinstance==nullptr)
-        {
-            gameinstance=new Game();
-        }
-        mtx.unlock();
+
+public:
+    static Game* creategame() {
+        lock_guard<mutex> lock(mtx);
+        if (gameinstance == nullptr)
+            gameinstance = new Game();
         return gameinstance;
     }
-    void makemove(int r,int c)
-    {
-        currstate->makemove(this,r,c);
-    }
-    void startgame()
-    {
-        currstate=new Playing();
-    }
-    void endgame()
-    {
-        currstate=new End();
-    }
-    void switchturns()
-    {
-        turn=!turn;
-    }
+
+    int getcurrplayerid() const { return turn; }
+    Board* getboard() const { return b; }
+    string getgamestate() const { return currstate->getstate(); }
+
+    void makemove(int r, int c) { currstate->makemove(this, r, c); }
+
+    void startgame() { currstate = new Playing(); }
+    void endgame() { currstate = new End(); }
+    void switchturn() { turn = !turn; }
+
+    void setstate(IState* st) { currstate = st; }
 };
-Game* Game::gameinstance=nullptr;
+
+Game* Game::gameinstance = nullptr;
 mutex Game::mtx;
 
+// Implement Notstarted::makemove now that Game exists
+void Notstarted::makemove(Game* g, int r, int c) {
+    g->startgame();
+    cout << "Game started\n";
+    g->makemove(r, c); // Delegate to Playing state
+}
+
+void Playing::makemove(Game* g, int r, int c) {
+    Board* b = g->getboard();
+    int p = g->getcurrplayerid();
+
+    if (!b->checkandinsert(r, c, p)) {
+        cout << "Invalid move, try again\n";
+        return;
+    }
+
+    b->print();
+
+    if (b->checkWinner(p)) {
+        cout << "Player " << (p == 0 ? "X" : "O") << " has won the game!\n";
+        g->endgame();
+        return;
+    }
+
+    if (b->isend()) {
+        cout << "Game ended in a draw.\n";
+        g->endgame();
+        return;
+    }
+
+    g->switchturn();
+}
+
+// Driver
 int main() {
-    Game* tictac=Game::creategame();
-    tictac->makemove(0,0,0);
-    tictac->makemove(0,1,1);
-    tictac->makemove(1,0,0);
-    tictac->makemove(0,2,1);
-    tictac->makemove(2,0,0);
-    tictac->makemove(2,1,0);
+    Game* tictac = Game::creategame();
+
+    tictac->makemove(0, 0);
+    tictac->makemove(0, 1);
+    tictac->makemove(1, 0);
+    tictac->makemove(0, 2);
+    tictac->makemove(2, 0); // X should win here
+    return 0;
 }
