@@ -124,7 +124,7 @@ class ElevatorRequest{
     int id;// id of the elevator;
     int isinternalrequest;// int or ext request
     public:
-    ElevatroRequest(int floor,int dir,int id,int type){
+    ElevatorRequest(int floor,int dir,int id,int type){
         currentfloor=floor;
         reqdir=dir;
         id=id;
@@ -181,7 +181,8 @@ class EfficientStrategy:public SchedulingStrategy{
         int floorans=currfloor;
         for(auto r:req)
         {
-            if(dir==UP){// all internal requests and external request having dir as up and within the floor range can be catered
+            if(dir==UP){
+            // all internal requests and external request having dir as up and within the floor range can be catered
             if(req.getfloor()<= tofloor and req.getfloor()>= currfloor)
             {
                 if(req.checkifinternalrequest() or ( !req.checkifinternalrequest() && req.getdirection()==UP))
@@ -193,7 +194,8 @@ class EfficientStrategy:public SchedulingStrategy{
             }
                 
             }else{
-                if(dir==DOWN){// all internal requests and external request having dir as up and within the floor range can be catered
+                if(dir==DOWN){
+                    // all internal requests and external request having dir as up and within the floor range can be catered
             if(req.getfloor()<= currfloor and req.getfloor()>= tofloor)
             {
                 if(req.checkifinternalrequest() or ( !req.checkifinternalrequest() && req.getdirection()==DOWN))
