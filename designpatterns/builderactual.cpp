@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+/// PREFER THIS VARIANT OF BUILDER DP OVER THE OTHER ONE IN INTERVIEWS
+
 class Computer{
     string cpu;
     int ram;
@@ -64,4 +66,31 @@ int main() {
     ->setcpu("amd")
     ->build();
     gamingpc->getcomputer();
+    delete gamingpc;
 }
+
+
+/// GENERIC TEMPLATE
+class Product {
+    int a;
+    int b;
+    string c;
+
+    Product(int a, int b, string c) : a(a), b(b), c(c) {}
+
+public:
+    class Builder {
+        int a = 0;
+        int b = 0;
+        string c = "default";
+
+    public:
+        Builder& setA(int x) { a = x; return *this; }
+        Builder& setB(int y) { b = y; return *this; }
+        Builder& setC(string s) { c = move(s); return *this; }
+
+        Product build() {   // value return preferred if cheap
+            return Product(a, b, c);
+        }
+    };
+};

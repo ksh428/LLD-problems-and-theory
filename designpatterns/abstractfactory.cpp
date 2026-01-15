@@ -1,80 +1,106 @@
-#include <iostream>
-#include <thread>
-#include <mutex>
+#include <bits/stdc++.h>
+
 using namespace std;
 
 class Button{
     public:
-    virtual void getButton()=0;
+    virtual void getbutton()=0;
+    virtual ~Button()=default; // this is used to cleanup derived class resources when we delete the base class ptr
+    //A virtual destructor ensures that when an object is deleted through a base-class pointer, the derived class destructor is called, preventing resource leaks.
 };
-class KeyBoard{
+class Keyboard{
     public:
-    virtual void getKeyboard()=0;
+    virtual void getkeyboard()=0;
+    virtual ~Keyboard()=default;
 };
-class WinButton:public Button
-{
+class Winbutton: public Button{
     public:
-    void getButton()
+    void getbutton()
     {
-        cout<<"windows button";
+        cout<<"windows button"<<endl;
     }
 };
-class WinKeyboard:public KeyBoard
-{
+class Macbutton: public Button{
     public:
-    void getKeyboard()
+    void getbutton()
     {
-        cout<<"windows Keyboard";
+        cout<<"mac button"<<endl;
     }
 };
-class MacButton:public Button
-{
+class Winkeyboard:public Keyboard{
     public:
-    void getButton()
+    void getkeyboard()
     {
-        cout<<"Mac button";
-    }
-};
-class MacKeyboard:public KeyBoard
-{
-    public:
-    void getKeyboard()
-    {
-        cout<<"Mac Keyboard";
-    }
-};
-class UIFactory{
-    public:
-    virtual Button* getUIButton()=0;
-    virtual KeyBoard* getUIKeyboard()=0;
-};
-class WinFactory:public UIFactory{
-    public:
-    Button* getUIButton()
-    {
-        return new WinButton();
-    }
-    KeyBoard* getUIKeyboard()
-    {
-        return new WinKeyboard();
-    }
-};
-class MacFactory:public UIFactory{
-    public:
-    Button* getUIButton()
-    {
-        return new MacButton();
-    }
-    KeyBoard* getUIKeyboard()
-    {
-        return new MacKeyboard();
+        cout<<"windows keyboard"<<endl;
     }
 };
 
-int main()
-{
-    UIFactory* winfact=new WinFactory();
-    winfact->getUIButton()->getButton();
-    winfact->getUIKeyboard()->getKeyboard();
-    
+class Mackeyboard:public Keyboard{
+    public:
+    void getkeyboard()
+    {
+        cout<<"mac keyboard"<<endl;
+    }
+};
+class ProdFactory{
+    public:
+    virtual void createbutton()=0;
+    virtual void createkeyboard()=0;
+    virtual void displaydetails()=0;
+    virtual ~ProdFactory()=default;
+};
+class WinFactory:public ProdFactory{
+    Button* btn;
+    Keyboard* kb;
+    public:
+    WinFactory()
+    {
+        createbutton();
+        createkeyboard();
+    }
+    void createbutton()
+    {
+        btn=new Winbutton();
+    }
+    void createkeyboard()
+    {
+        kb=new Winkeyboard();
+    }
+    void displaydetails()
+    {
+        btn->getbutton();
+        kb->getkeyboard();
+    }
+};
+class MacFactory:public ProdFactory{
+    Button* btn;
+    Keyboard* kb;
+    public:
+    MacFactory()
+    {
+        createbutton();
+        createkeyboard();
+    }
+    void createbutton()
+    {
+        btn=new Macbutton();
+    }
+    void createkeyboard()
+    {
+        kb=new Mackeyboard();
+    }
+    void displaydetails()
+    {
+        btn->getbutton();
+        kb->getkeyboard();
+    }
+};
+
+int main() {
+    ProdFactory* macfact=new MacFactory();
+    macfact->displaydetails();
+    ProdFactory* winfact=new WinFactory();
+    winfact->displaydetails();
+    delete macfact;
+    delete winfact;
 }
