@@ -63,3 +63,37 @@ int main()
     Client c=Client();
     c.processdata(tool);
 }
+
+// GENERIC TEMPLATE
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class Unsupported{
+    public:
+    void play()
+    {
+        cout<<"playing from unsupported"<<endl;
+    }
+};
+
+class Supported{
+    public:
+    virtual void play()=0;
+    virtual ~Supported()=default;
+};
+class Adapter:public Supported{
+    Unsupported* sup;
+    public:
+    Adapter(Unsupported* s):sup(s) {}
+    void play()
+    {
+        sup->play();
+    }
+};
+int main() {
+    Unsupported* s = new Unsupported();
+    Supported* adapter=new Adapter(s);
+    adapter->play();
+}

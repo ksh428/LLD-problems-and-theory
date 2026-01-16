@@ -66,3 +66,50 @@ int main() {
     veh->Drive();
     return 0;
 }
+
+
+//SIMPLER AND ENOUGH
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class Paymentstrategy{
+    public:
+    virtual void pay()=0;
+    virtual ~Paymentstrategy()=default;
+};
+class CardPayment:public Paymentstrategy{
+    public:
+    void pay()
+    {
+        cout<<"making card payments "<<endl;
+    }
+};
+class UpiPayment:public Paymentstrategy{
+    public:
+    void pay()
+    {
+        cout<<"making upi payments "<<endl;
+    }
+};
+class Baseapp{
+    Paymentstrategy* ps;
+    public:
+    Baseapp(Paymentstrategy* p):ps(p) {}
+    void makepayment()
+    {
+        ps->pay();
+    }
+    void setstrategy(Paymentstrategy* p){
+        ps=p;
+    }
+};
+
+int main() {
+    Baseapp* train=new Baseapp(new UpiPayment());
+    train->makepayment();
+    train->setstrategy(new CardPayment());
+    train->makepayment();
+    delete train;
+}
