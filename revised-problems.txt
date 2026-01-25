@@ -1,0 +1,4 @@
+1. Tic -tac toe -> done
+2. atm machine 
+3. parkinglot
+4. snakeandfood
