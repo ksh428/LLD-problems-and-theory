@@ -1,4 +1,11 @@
 // Online C++ compiler to run C++ program online
+
+// BOUNDED BUFFER PROBLEM
+
+// PROBLEM STATEMENT: A producer thread produces data and puts it in a buffer.
+// A consumer thread consumes data from the buffer. The producer should not produce data if the buffer is full,
+// and the consumer should not consume data if the buffer is empty.
+
 #include <bits/stdc++.h>
 #include <thread>
 #include <mutex>
@@ -36,8 +43,6 @@ void consumer()
         cv.notify_one();
     }
 }
-
-
 int main() {
     thread t1(producer,50);
     thread t2(consumer);

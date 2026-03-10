@@ -1,101 +1,115 @@
 #include <bits/stdc++.h>
-#include <thread>
-#include <chrono>
-
 using namespace std;
 
-class Trafficontext;
+class TrafficLight;   // forward declaration
 
 // ---------------- STATE INTERFACE ----------------
-class Trafficstate {
+class State {
 public:
-    virtual string getstate() = 0;
-    virtual void handle(Trafficontext* ctx) = 0;
-    virtual ~Trafficstate() = default;
+    virtual void handle(TrafficLight* light) = 0;
+    virtual string name() = 0;
+    virtual ~State() {}
 };
+
 
 // ---------------- CONTEXT ----------------
-class Trafficontext {
-    Trafficstate* currstate;
+class TrafficLight {
+private:
+    State* currentState;
 
 public:
-    Trafficontext();
-    ~Trafficontext();
-
-    void setState(Trafficstate* state);
-    void request();
-    void getcurrstate();
-};
-
-// ---------------- STATES ----------------
-class Greenlight : public Trafficstate {
-public:
-    string getstate() override { return "green"; }
-
-    void handle(Trafficontext* ctx) override;
-};
-
-class Yellowlight : public Trafficstate {
-public:
-    string getstate() override { return "yellow"; }
-
-    void handle(Trafficontext* ctx) override;
-};
-
-class Redlight : public Trafficstate {
-public:
-    string getstate() override { return "red"; }
-
-    void handle(Trafficontext* ctx) override;
-};
-
-// ---------------- STATE LOGIC ----------------
-void Greenlight::handle(Trafficontext* ctx) {
-    this_thread::sleep_for(chrono::seconds(3));
-    cout << "Green → Yellow\n";
-    ctx->setState(new Yellowlight());
-}
-
-void Yellowlight::handle(Trafficontext* ctx) {
-    this_thread::sleep_for(chrono::seconds(2));
-    cout << "Yellow → Red\n";
-    ctx->setState(new Redlight());
-}
-
-void Redlight::handle(Trafficontext* ctx) {
-    this_thread::sleep_for(chrono::seconds(3));
-    cout << "Red → Green\n";
-    ctx->setState(new Greenlight());
-}
-
-// ---------------- CONTEXT IMPLEMENTATION ----------------
-Trafficontext::Trafficontext() {
-    currstate = new Redlight();
-}
-
-Trafficontext::~Trafficontext() {
-    delete currstate;
-}
-
-void Trafficontext::setState(Trafficstate* state) {
-    delete currstate;
-    currstate = state;
-}
-
-void Trafficontext::request() {
-    currstate->handle(this);
-}
-
-void Trafficontext::getcurrstate() {
-    cout << "Current State: " << currstate->getstate() << endl;
-}
-
-// ---------------- MAIN ----------------
-int main() {
-    Trafficontext ctx;
-
-    for (int i = 0; i < 6; i++) {
-        ctx.getcurrstate();
-        ctx.request();
+    TrafficLight(State* state) {
+        currentState = state;
     }
+
+    void setState(State* state) {
+        delete currentState;
+        currentState = state;
+    }
+
+    void change() {
+        currentState->handle(this);
+    }
+
+    void show() {
+        cout << "Current State: " << currentState->name() << endl;
+    }
+
+    ~TrafficLight() {
+        delete currentState;
+    }
+};
+
+
+// ---------------- CONCRETE STATES ----------------
+
+class RedState : public State {
+public:
+    void handle(TrafficLight* light) override;
+    string name() override {
+        return "RED";
+    }
+};
+
+class ReadyState : public State {
+public:
+    void handle(TrafficLight* light) override;
+    string name() override {
+        return "READY";
+    }
+};
+
+class GreenState : public State {
+public:
+    void handle(TrafficLight* light) override;
+    string name() override {
+        return "GREEN";
+    }
+};
+
+class YellowState : public State {
+public:
+    void handle(TrafficLight* light) override;
+    string name() override {
+        return "YELLOW";
+    }
+};
+
+
+// ---------------- STATE TRANSITIONS ----------------
+
+void RedState::handle(TrafficLight* light) {
+    cout << "Transition: RED -> READY\n";
+    light->setState(new ReadyState());
+}
+
+void ReadyState::handle(TrafficLight* light) {
+    cout << "Transition: READY -> GREEN\n";
+    light->setState(new GreenState());
+}
+
+void GreenState::handle(TrafficLight* light) {
+    cout << "Transition: GREEN -> YELLOW\n";
+    light->setState(new YellowState());
+}
+
+void YellowState::handle(TrafficLight* light) {
+    cout << "Transition: YELLOW -> RED\n";
+    light->setState(new RedState());
+}
+
+
+// ---------------- CLIENT ----------------
+
+int main() {
+
+    TrafficLight light(new RedState());
+
+    for(int i = 0; i < 8; i++) {
+        light.show();
+        light.change();
+        cout << endl;
+    }
+
+    return 0;
 }

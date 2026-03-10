@@ -1,4 +1,12 @@
 1. Tic -tac toe -> done
-2. atm machine 
-3. parkinglot
-4. snakeandfood
+2. atm machine -> done
+3. parkinglot ->done
+4. snake and food ->done
+
+today:
+1. revise concurrency in cpp
+2. inventry mgmt
+
+tbd:
+elevator
+chess
