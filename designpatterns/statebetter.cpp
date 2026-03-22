@@ -8,7 +8,7 @@ class State {
 public:
     virtual void handle(TrafficLight* light) = 0;
     virtual string name() = 0;
-    virtual ~State() {}
+    virtual ~State() =default;
 };
 
 

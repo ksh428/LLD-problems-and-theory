@@ -35,7 +35,7 @@ class Snake {
     Board* b;
 public:
     Snake(int m, int n, Board* b1) {
-        dir = 3; // right
+        dir = 3;
         b = b1;
         int startx = m / 2;
         int starty = n / 2;
@@ -57,36 +57,32 @@ public:
     }
 
     pair<int, int> getnewpos(pair<int, int> a, int d) {
-        if (d == 0) return {a.first - 1, a.second}; // up
-        if (d == 1) return {a.first + 1, a.second}; // down
-        if (d == 2) return {a.first, a.second - 1}; // left
-        return {a.first, a.second + 1};             // right
+        if (d == 0) return {a.first - 1, a.second};
+        if (d == 1) return {a.first + 1, a.second};
+        if (d == 2) return {a.first, a.second - 1};
+        return {a.first, a.second + 1};
     }
 
     int move(int d, vector<Food>& foods, int& fpos) {
         if (!canmoved(d)) return -1;
 
-        dir = d; // update direction
-
+        dir = d;
         auto shead = dq.front();
         auto newhead = getnewpos(shead, d);
 
         int nr = b->getrows();
         int nc = b->getcols();
 
-        // wall collision
         if (newhead.first < 0 || newhead.first >= nr ||
             newhead.second < 0 || newhead.second >= nc)
             return 0;
-        cout<<"not wall collision "<<endl;
+
         auto stail = dq.back();
 
-        // self-collision
         if (mp.find(newhead) != mp.end() &&
             !(newhead.first == stail.first && newhead.second == stail.second)) {
             return 0;
         }
-        cout<<"not self collision "<<endl;
 
         bool ate = false;
 
@@ -113,23 +109,34 @@ public:
     }
 };
 
+class Game;
+
 // ---------------- Game State ----------------
 class IGamestate {
 public:
     virtual string getstate() = 0;
+    virtual int move(int dir, Game* g) = 0;
     virtual ~IGamestate() = default;
 };
 
 class Notstarted : public IGamestate {
 public:
+    int move(int dir, Game* g) override;
     string getstate() override { return "not started"; }
 };
+
 class Started : public IGamestate {
 public:
+    int move(int dir, Game* g) override;
     string getstate() override { return "started"; }
 };
+
 class Finished : public IGamestate {
 public:
+    int move(int dir, Game* g) override {
+        cout << "game finished, can't make move" << endl;
+        return 0;
+    }
     string getstate() override { return "finished"; }
 };
 
@@ -153,8 +160,9 @@ class Game {
     }
 
 public:
-    Game(const Game&) = delete;
-    Game& operator=(const Game&) = delete;
+    vector<Food>& getfood() { return foods; }
+    int& getfoodpos() { return foodpos; }
+    Snake* getsnake() { return s; }
 
     static Game* getgame(int m, int n) {
         lock_guard<mutex> lock(mtx);
@@ -164,19 +172,16 @@ public:
         return game;
     }
 
-    // ✅ Print the board with snake and food
     void printboard() {
         int rows = b->getrows();
         int cols = b->getcols();
         vector<vector<char>> grid(rows, vector<char>(cols, '0'));
 
-        // mark snake
         auto snakepos = s->getsnakepositions();
         for (auto [r, c] : snakepos) {
             grid[r][c] = '$';
         }
 
-        // mark current food
         if (foodpos < (int)foods.size()) {
             int fx = foods[foodpos].getfoodr();
             int fy = foods[foodpos].getfoodc();
@@ -194,19 +199,12 @@ public:
     }
 
     int move(int dir) {
-        int res = s->move(dir, foods, foodpos);
-        if (res == 0) {
-            cout << "Game ended with score " << s->getcurrscore() << endl;
-            printboard();
-            return 0;
-        } else if (res == -1) {
-            cout << "Can't make this move (reverse direction)" << endl;
-            return 1;
-        } else {
-            cout << "Move made, current score " << s->getcurrscore() << endl;
-            printboard();
-            return 2;
-        }
+        return state->move(dir, this);
+    }
+
+    void setstate(IGamestate* s1) {
+        delete state;
+        state = s1;
     }
 };
 
@@ -214,16 +212,47 @@ public:
 Game* Game::game = nullptr;
 mutex Game::mtx;
 
+// ---------------- FIXED STATE ----------------
+
+int Notstarted::move(int dir, Game* g)
+{
+    g->setstate(new Started());
+    return g->move(dir); // safe now because state changed
+}
+
+int Started::move(int dir, Game* g)
+{
+    Snake* s = g->getsnake();
+    vector<Food>& foods = g->getfood();
+    int& foodpos = g->getfoodpos();
+
+    int res = s->move(dir, foods, foodpos);
+
+    if (res == 0) {
+        cout << "Game ended with score " << s->getcurrscore() << endl;
+        g->setstate(new Finished());
+    }
+    else if (res == -1) {
+        cout << "Can't make this move (reverse direction)" << endl;
+    }
+    else {
+        cout << "Move made, current score " << s->getcurrscore() << endl;
+    }
+
+    g->printboard();
+    return res;
+}
+
 // ---------------- Main ----------------
 int main() {
     Game* g = Game::getgame(6, 6);
 
     g->printboard();
-    g->move(3); // right
-    g->move(3); // right
-    g->move(1); // down
-    g->move(1); // down
-    g->move(2); // left
+    g->move(3);
+    g->move(3);
+    g->move(1);
+    g->move(1);
+    g->move(2);
 }
 
 // ALL FOODS AT ONCE
