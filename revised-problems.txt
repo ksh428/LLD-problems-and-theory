@@ -4,8 +4,8 @@
 4. snake and food ->done
 
 today:
-1. revise concurrency in cpp
-2. inventry mgmt
+1. elevator
+2. file system
 
 tbd:
 elevator

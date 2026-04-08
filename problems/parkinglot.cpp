@@ -262,3 +262,9 @@ Ticket* t = Ticket::Builder()
                 .setEntry(time(nullptr))
                 .setGate("Gate A")
                 .build();
+
+
+// POSSIBLE IMPROVEMENTS:
+// 1. Add factory method for getting payment strategy based on user input
+// 2. Add pricing calculation based on ticket params
+// 3. Handle concurrent access to parking lot using mutex locks
