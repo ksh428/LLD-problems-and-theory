@@ -2,11 +2,10 @@
 2. atm machine -> done
 3. parkinglot ->done
 4. snake and food ->done
+5. elevatr - done
 
-today:
-1. elevator
-2. file system
 
 tbd:
-elevator
+file system
 chess
+splitwise
