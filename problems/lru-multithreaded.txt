@@ -1,0 +1,17 @@
+The single global mutex based solution is not perfect- > this will serialise all access and can become
+a bottleneck in high throughput systems.
+
+A better strategy is to use shard based locking-> partition the cache
+into multiple shards each with its own mutex.
+
+vector<LRUCache> shards;
+shard = hash(key) % num_shards;
+
+shard is decidec by key
+each shard handles a subset of keys
+
+this makes sure that each key goes to its own shard and don't block each other
+And each shard is internally using the mutex to handle concurrency
+
+Still it has some issues:
+1. Eviction is par shard, a shardmay be full but globally it may still have some capacity
