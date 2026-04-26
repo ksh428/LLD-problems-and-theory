@@ -36,7 +36,7 @@ class BoundedBlockingQueue{
     {
         empty.acquire();
         lock_guard<mutex>lock(mtx);
-        q.push(ele);
+        q.push(e);
         full.release();
     }
     int dequeue()
