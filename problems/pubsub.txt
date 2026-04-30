@@ -1,0 +1,5 @@
+Concurrency requirements:
+
+1. Multiple threads should be able to publish at sametime
+2. Multiple subscribers can be added simultaneously
+3. Publishing while subscibing is hapenning
