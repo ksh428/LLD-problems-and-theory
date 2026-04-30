@@ -2,7 +2,7 @@
 
 // PROBLEM STATEMENT: A producer thread produces data and puts it in a buffer.
 // A consumer thread consumes data from the buffer. The producer should not produce data if the buffer is full,
-// and the consumer should not consume data if the buffer is empty.
+// and the consumer should not cons
 
 #include <bits/stdc++.h>
 #include <thread>
@@ -36,37 +36,42 @@ public:
 int buffer_size = 10;
 deque<int> dq;
 
-// Semaphores:
-// empty: tracks number of empty slots in buffer (initially = buffer_size)
-// filled: tracks number of filled slots in buffer (initially = 0)
-Semaphore empty(10);  // initially 10 empty slots
-Semaphore filled(0);  // initially 0 filled slots
-mutex mtx;            // for mutual exclusion
+// Semaphores
+Semaphore emptySlots(10);   // renamed from empty
+Semaphore filled(0);
+
+mutex mtx;
 
 void producer(int n) {
     while (n > 0) {
-        empty.acquire();  // wait for empty slot
+        emptySlots.acquire();
+
         {
             unique_lock<mutex> lock(mtx);
             dq.push_back(n);
-            cout << "Produced: " << n << " (Buffer size: " << dq.size() << ")" << endl;
+            cout << "Produced: " << n
+                 << " (Buffer size: " << dq.size() << ")" << endl;
         }
-        filled.release(); // signal that a slot is filled
+
+        filled.release();
         n--;
     }
 }
 
 void consumer() {
     while (true) {
-        filled.acquire();  // wait for filled slot
+        filled.acquire();
+
         int val;
         {
             unique_lock<mutex> lock(mtx);
             val = dq.back();
             dq.pop_back();
-            cout << "Consumed: " << val << " (Buffer size: " << dq.size() << ")" << endl;
+            cout << "Consumed: " << val
+                 << " (Buffer size: " << dq.size() << ")" << endl;
         }
-        empty.release();  // signal that a slot is empty
+
+        emptySlots.release();
     }
 }
 
@@ -75,7 +80,9 @@ int main() {
     thread t2(consumer);
 
     t1.join();
-    // Note: consumer thread runs indefinitely, so we don't join it
+
+    // consumer runs forever, so detach it
+    t2.detach();
 
     return 0;
 }
