@@ -84,11 +84,11 @@ int main() {
     // americano+ choco + milk
     
     // base coffee
-    Coffee* americano=new Americano();
+    Coffee* coffee=new Americano();
     
-    Coffee* chocoamericano=new ChocolateDecorator(americano);
+    coffee=new ChocolateDecorator(coffee);
     
-    Coffee* milkchocoamericano=new MilkDecorator(chocoamericano);
-    cout<<milkchocoamericano->getDesc()<<" "<<milkchocoamericano->getPrice();
+    coffee=new MilkDecorator(coffee);
+    cout<<coffee->getDesc()<<" "<<coffee->getPrice();
     return 0;
 }
