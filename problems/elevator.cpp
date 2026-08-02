@@ -1,15 +1,14 @@
-#include <bits/stdc++.h>
+#include<bits/stdc++.h>
 #include <mutex>
 using namespace std;
 
-class ElevatorRequest{
-    int eid;
-    int sfloor;
-    int dfloor;
-public:
-    ElevatorRequest(int i,int sf,int df) : eid(i),sfloor(sf),dfloor(df) {}
-    int getsf() {return sfloor;}
-    int getdf() {return dfloor;}
+class Request{
+    int sf;
+    int df;
+    public:
+    Request(int s,int d): sf(s),df(d) {}
+    int getsf() {return sf;}
+    int getdf() {return df;}
 };
 
 enum DIR{
@@ -20,151 +19,194 @@ enum DIR{
 
 class Elevator{
     int id;
-    int cfloor;
+    queue<Request*>requests;
     DIR d;
-    queue<ElevatorRequest*>requests;
-public:
-    Elevator(int pid,int cf) : id(pid),cfloor(cf) {
+    int cf;
+    public:
+    Elevator(int i)
+    {
+        id=i;
         d=IDLE;
+        cf=0;
     }
-    DIR getdir() {return d;}
-    int getid() {return id;}
-    int getcf() {return cfloor;}
-    void addrequest(int df)
+    int getid()
     {
-        requests.push(new ElevatorRequest(id,cfloor,df));
-        handlerequests();
+        return id;
     }
-    void setrequests(queue<ElevatorRequest*>r)
+    void processrequests()
     {
-        requests=r;
-    }
-    void handlerequests()
-    {
-        if (requests.empty()) {
-            d = IDLE;
+        if(requests.empty())
+        {
+            d=IDLE;
             return;
         }
-        vector<ElevatorRequest*> temp;
-        while (!requests.empty()) {
+        vector<Request*>temp;
+        while(!requests.empty())
+        {
             temp.push_back(requests.front());
             requests.pop();
         }
-        if (d == IDLE) {
-            if (temp[0]->getdf() > cfloor)
-                d = UP;
-            else
-                d = DOWN;
+        int nextfloor=-1;
+        if(d==IDLE)
+        {
+            d=(temp[0]->getdf()>cf)?UP:DOWN;
         }
-        int nextFloor = -1;
-        int bestDist = INT_MAX;
-        for (auto &req : temp) {
-            int df = req->getdf();
-            if (d == UP && df >= cfloor) {
-                if (df - cfloor < bestDist) {
-                    bestDist = df - cfloor;
-                    nextFloor = df;
+        int diff=INT_MAX;
+        // nearest request in the current dir
+        for(auto it:temp)
+        {
+            int floor=it->getdf();
+            if(d==UP and floor>=cf)
+            {
+                if(floor-cf<diff)
+                {
+                    diff=floor-cf;
+                    nextfloor=floor;
                 }
             }
-            else if (d == DOWN && df <= cfloor) {
-                if (cfloor - df < bestDist) {
-                    bestDist = cfloor - df;
-                    nextFloor = df;
+            if(d==DOWN and floor<=cf)
+            {
+                if(cf-floor<diff)
+                {
+                    diff=cf-floor;
+                    nextfloor=floor;
                 }
             }
         }
-        if (nextFloor == -1) {
-            d = (d == UP) ? DOWN : UP;
-            for (auto &req : temp) {
-                int df = req->getdf();
-                int dist = abs(df - cfloor);
+        // if nothing found in the same dir,change and the dir and check
+        if(nextfloor==-1)
+        {
+            d=(d==UP)?DOWN:UP;
+            diff=INT_MAX;
+            for(auto it:temp)
+            {
+                int floor=it->getdf();
+                if(d==UP and floor>=cf)
+                {
+                    if(floor-cf<diff)
+                    {
+                        diff=floor-cf;
+                        nextfloor=floor;
+                    }
+                }
+                if(d==DOWN and floor<=cf)
+                {
+                    if(cf-floor<diff)
+                    {
+                        diff=cf-floor;
+                        nextfloor=floor;
+                    }
+                }
+            }
 
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    nextFloor = df;
-                }
+        }  
+        cout<<"Elevator "<<id<<" going to "<<nextfloor<<" from "<<cf<<endl;
+        cf=nextfloor;
+        for(auto it:temp)
+        {
+            if(it->getdf()==nextfloor)
+            {
+                delete it;
+                continue;
             }
+            requests.push(it);
         }
-        cout << "Elevator " << id << " moving from " << cfloor 
-             << " to " << nextFloor << endl;
-        cfloor = nextFloor;
-        for (auto &req : temp) {
-            if (req->getdf() != nextFloor) {
-                requests.push(req);
-            }
+        if(requests.empty()) d=IDLE;
+    }
+    DIR getdir() {return d;}
+    int getcf() {return cf;}
+    void addrequest(Request* r)
+    {
+        requests.push(r);
+        while(!requests.empty())
+        {
+            processrequests();
         }
-        if (requests.empty()) {
-            d = IDLE;
-        }
+    }
+    queue<Request*> getrequests()
+    {
+        return requests;
     }
 };
-
-class ElevatorSystem{
-    static ElevatorSystem* es;
+class Elevatorsystem{
+    vector<Elevator*> elevators;
+    static Elevatorsystem* elevatorinstance;
     static mutex mtx;
-    vector<Elevator*>elevators;
-    ElevatorSystem()
+    Elevatorsystem(int n)
     {
-        for(int i=0;i<5;i++)
+        for(int i=0;i<n;i++)
         {
-            elevators.push_back(new Elevator(i,0));
+            elevators.push_back(new Elevator(i));
         }
     }
-public:
-    int getrelevantelevator(DIR d,int sf);
-
-    ElevatorSystem& operator=(const ElevatorSystem&) = delete;
-    ElevatorSystem(const ElevatorSystem&) = delete;
-    static ElevatorSystem* initsystem()
+    Elevatorsystem& operator=(const Elevatorsystem&)=delete;
+    Elevatorsystem(const Elevatorsystem&)=delete;
+    public:
+    static Elevatorsystem* createsystem(int n)
     {
         lock_guard<mutex>lock(mtx);
-        if(es==nullptr)
+        if(!elevatorinstance)
         {
-            es=new ElevatorSystem();
+            elevatorinstance=new Elevatorsystem(n);
         }
-        return es;
+        return elevatorinstance;
     }
-    vector<Elevator*> getelevators() {return elevators;}
-
-    void addrequest(int sf,int df)
+    int findelevator(DIR d,int cf)
     {
-        DIR dir;
-        if(sf>df)
-            dir=DOWN;
-        else
-            dir=UP;
-        int i=getrelevantelevator(dir,sf);
-        elevators[i]->addrequest(df);
+        int ans=0;
+        int dist=INT_MAX;
+        for(auto it:elevators)
+        {
+            if(it->getdir() == IDLE)
+            {
+                int cd = abs(it->getcf() - cf);
+                if(cd < dist)
+                {
+                    dist = cd;
+                    ans = it->getid();
+                }
+            }
+            else if(it->getdir()==UP && d==UP && it->getcf()<=cf)
+            {
+                int cd=abs(it->getcf()-cf);
+                if(cd<dist)
+                {
+                    dist=cd;
+                    ans=it->getid();
+                }
+            }
+           else if(it->getdir()==DOWN && d==DOWN && it->getcf()>=cf)
+           {
+                int cd=abs(it->getcf()-cf);
+                    if(cd<dist)
+                    {
+                        dist=cd;
+                        ans=it->getid();
+                    }
+           }
+        }
+        return ans;
+    }
+    void requestfloor(int cf,int tf)
+    {
+        DIR d;
+        if(tf>cf){
+            d=UP;
+        }else d=DOWN;
+        int id=findelevator(d,cf);
+        elevators[id]->addrequest(new Request(cf,tf));
     }
 };
-ElevatorSystem* ElevatorSystem::es=nullptr;
-mutex ElevatorSystem::mtx;
-int ElevatorSystem::getrelevantelevator(DIR d,int sf)
+Elevatorsystem* Elevatorsystem::elevatorinstance=nullptr;
+mutex Elevatorsystem::mtx;
+
+// press the floor where we want to go right from the outside
+
+int main()
 {
-    int mindiff=INT_MAX;
-    int ans =-1;
+    Elevatorsystem* es = Elevatorsystem::createsystem(5);
+    es->requestfloor(0, 5);
+    es->requestfloor(2, 8);
+    es->requestfloor(7, 1);
 
-    for(auto it:elevators)
-    {
-        if(it->getdir()==d || it->getdir()==IDLE)
-        {
-            int diff = abs(it->getcf()-sf);
-            if(diff < mindiff)
-            {
-                ans=it->getid();
-                mindiff=diff;
-            }
-        }
-    }
-    if(ans!=-1) return ans;
-    return 0;
-}
-
-int main() {
-    ElevatorSystem* es = ElevatorSystem::initsystem();
-    es->addrequest(0, 5);
-    es->addrequest(2, 8);
-    es->addrequest(7, 1);
-
-    return 0;
 }
