@@ -14,11 +14,7 @@ int main() {
     int notified=0;
     thread consumer([&]{
         unique_lock<mutex>lock(mtx);
-        if(!notified)
-        {
-            cout<<"consumer is sleeping"<<endl;
-            cv.wait(lock);
-        }
+        cv.wait(lock,[&]{ return notified;});
         cout<<"consumer result "<<glo<<endl;
     });
     thread producer([&]{
