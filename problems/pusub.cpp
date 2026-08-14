@@ -149,6 +149,31 @@ public:
         Message m(msg);
         t->publish(m);
     }
+    void unsubscribe(const string& id)
+    {
+        Subscriber* user = nullptr;
+        vector<Topic*> topic_list;
+
+        {
+            lock_guard<mutex> lock(subscriber_mutex);
+
+            auto it = subscribers.find(id);
+            if (it == subscribers.end())
+                return;
+
+            user = it->second.get();
+        }
+
+        {
+            lock_guard<mutex> lock(topic_mutex);
+
+            for (auto& [name, topic] : topics)
+                topic_list.push_back(topic.get());
+        }
+
+        for (auto topic : topic_list)
+            topic->unsubscribe(user);
+    }
 };
 
 class Publisher {

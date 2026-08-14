@@ -1,6 +1,5 @@
 
-#include <iostream>
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
 
 class ISubject {
@@ -30,14 +29,17 @@ public:
 
 class SMSNotifier : public INotifier {
     vector<ISubject*> v;
+    mutex mtx;
 
 public:
     void subscribe(ISubject* s) override {
+        lock_guard<mutex>lock(mtx);
         v.push_back(s);
     }
 
     void unsubscribe(ISubject* s) override {
         vector<ISubject*> temp;
+        lock_guard<mutex>lock(mtx);
         for (auto it : v) {
             if (it != s)
                 temp.push_back(it);
@@ -46,7 +48,12 @@ public:
     }
 
     void sendmsg(string msg) override {
-        for (auto it : v) {
+        vector<ISubject*> snap;
+        {
+            lock_guard<mutex>lock(mtx);
+            snap=v;
+        }
+        for (auto it : snap) {
             it->notify(msg);
         }
     }

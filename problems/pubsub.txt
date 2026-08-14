@@ -3,3 +3,22 @@ Concurrency requirements:
 1. Multiple threads should be able to publish at sametime
 2. Multiple subscribers can be added simultaneously
 3. Publishing while subscibing is hapenning
+
+
+Pubsub vs MQ:
+
+MQ: point to point delivery, each message goes to only  worker -> async task distribution and load balancing
+Pubsub: all subscribers get the message
+
+Theory:
+Topic is logic partitioning of messages, ex: order topic, user topic, log topics etc
+publishers publish to a single topic
+
+Offset:
+ consumer offset : in a topic from where does the consumer start on consuming the data , diff consumers
+ can have diff data.
+ producer offset: from where does the producer starts adding data to the topic.
+
+Pubsubs has 2 models:
+push: topics pushes data into the subscribers
+pull: consuer pulls the data fro topic
