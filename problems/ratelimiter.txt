@@ -1,0 +1,25 @@
+Rate limiter:
+limit the number of requests to the backend server
+
+config of rl has the following:
+time window
+no of requests allowed in the time window
+
+
+LLD requirements:
+1. RL the users based on userid and tier (free/premium)
+2. Support 4 types
+3. thread safe
+
+Types of RL:
+1. Fixed window: allow only x requests on the window w, all other requests within the window are returned and does not go to
+server, then again when the new window start again first x are allowed
+2. Sliding window
+3. Token buket: allow requests if there is token in the bucket, tokens are put in the bucket every
+window/numrequests time
+
+Limitations of the standard impl:
+1. 1 single mutex for all the uers:
+
+Better way: to shard the user state and use hash to send a user id to a particular shard , each shard having its mutex
+
