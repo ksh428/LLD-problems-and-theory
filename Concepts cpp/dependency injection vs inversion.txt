@@ -1,0 +1,11 @@
+DI:
+inject a dependency to a class which needs it. The class maintains a local copy of the 
+dependent object and updates it with the injected value.
+
+DIP: (inversion)
+is just creating abstract classes and minimal classes 
+
+A combination of both is used in real systems .
+EX:
+Client needs a paymentprovider, so its inject by IPayprovider.
+IPayprovider can be paypal,stripe,google

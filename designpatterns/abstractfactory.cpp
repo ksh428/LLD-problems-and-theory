@@ -1,5 +1,10 @@
 #include <bits/stdc++.h>
 
+/*
+use when your system needs to create
+families of related or dependent objects without specifying their concrete classes
+*/
+
 using namespace std;
 
 class Button{

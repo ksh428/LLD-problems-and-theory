@@ -1,0 +1,16 @@
+SOLID:
+Single Responsibility: A class should serve only a single Responsibility
+Open/closed: Open for extension, closed for modification, use polymorphism
+Livskov Substitution: Child classes should be substitutable for parent classes,i.e the override methods should be compatible (both logically and code wise)
+Interface segregation : try to keep the class with single Responsibility, if need create interfaces for other methods
+Dependency inversion: Depend on abstractions, not concrete implementations [just think of normal extensibility]
+
+Examples:
+O:
+
+class pay{
+    virtual void makepayment()=0;
+};
+class UPI:public pay...
+class Card:pub  .....
+
