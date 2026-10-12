@@ -2,6 +2,9 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+//SUBJECT=OBSERVER
+//NOTIFIER IS THE CLIENT WHICH NOTIFY OBSERVERS
+
 class ISubject {
 public:
     virtual void notify(string msg) = 0;
