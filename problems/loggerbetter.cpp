@@ -123,6 +123,7 @@ class Logfactory{
 class Logger{
     static Logger* loggerinstance;
     static mutex mtx;
+    mutex logmtx;
     Config *c;
     Logger& operator=(const Logger&)=delete;
     Logger(const Logger&)=delete;
@@ -144,6 +145,7 @@ class Logger{
     void log(string level,string line,string time)
     {
         Logstruct l=Utils::getlogline(level,line,time);
+        lock_guard<mutex>lock(logmtx);
         Logrule* lr=c->getrule();
         if(lr->isblocked(l))
         {
