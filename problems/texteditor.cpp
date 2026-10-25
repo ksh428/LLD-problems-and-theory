@@ -142,6 +142,7 @@ class IOops{
         docs.erase(name);
     }
 };
+
 class TextEditor{
     Document* doc;
     Commandmanager* mgr;
@@ -183,6 +184,7 @@ class TextEditor{
     void deletedoc(string name)
     {
         io->deletedoc(name);
+        delete doc;
     }
     ~TextEditor()
     {

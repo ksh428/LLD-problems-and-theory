@@ -151,6 +151,9 @@ class Expense{
 int Expense::eid=0;
 
 // u1,u2 :200  u1->200,u2->-200
+// u1->300
+//u2 -> 150
+//u3 -> -450
 
 class Debtsimplifier{
     static bool comp(pair<string,double>&a,pair<string,double>&b)
