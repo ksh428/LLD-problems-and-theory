@@ -1,28 +1,29 @@
-#include<bits/stdc++.h>
-#include <thread>
-#include <condition_variable>
 
+#include <bits/stdc++.h>
 using namespace std;
-deque<int>buffer;
-int max_size=2;
+
 mutex mtx;
-condition_variable not_full;
-condition_variable not_empty;
+condition_variable notfullcv;
+condition_variable notemptycv;
+
+int buffer=10;
+bool done=false;
+deque<int>dq;
 
 void producer(int n)
 {
     while(n)
     {
-        // the scope brackets are an alternate to unlock, although not needed its good to scope the critical section
         {
             unique_lock<mutex>lock(mtx);
-            not_full.wait(lock,[&] {return buffer.size()<max_size;});
-            buffer.push_front(n);
-            n--;
+            notfullcv.wait(lock,[&] {return dq.size()<buffer;});
+            dq.push_back(n);
         }
-        not_empty.notify_one();
+        n--;
+        notemptycv.notify_one();
     }
 }
+
 void consumer()
 {
     while(1)
@@ -30,19 +31,25 @@ void consumer()
         int val;
         {
             unique_lock<mutex>lock(mtx);
-            not_empty.wait(lock,[&] {return buffer.size()>0;});
-            val=buffer.back();
-            buffer.pop_back();
+            notemptycv.wait(lock,[&] {return dq.size()>0 or done ;});
+            if(dq.empty() and done) break;
+            val=dq.front();
+            dq.pop_front();
         }
-        cout<<val<<endl;
-        not_full.notify_one();
+        cout<<val;
+        notfullcv.notify_one();
     }
 }
+
 int main()
 {
-    thread t1(producer,10);
-    thread t2(consumer);
+    thread t1(consumer,1000);
+    thread t2(producer);
     t1.join();
+    {
+        lock_guard<mutex>lock(mtx);
+        done=true;
+    }
+    notemptycv.notify_all();
     t2.join();
-
 }

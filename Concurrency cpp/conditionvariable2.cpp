@@ -30,6 +30,7 @@ void withdrawmoney(int m)
     cout<<"withdrawing money"<<endl;
     money-=m;
     cout<<"current balance "<<money<<endl;
+    cv.notify_one();
 }
 
 int main() {
