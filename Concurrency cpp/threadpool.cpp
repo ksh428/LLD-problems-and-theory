@@ -52,10 +52,13 @@ public:
     }
 };
 
+mutex coutMtx;
+
 int main() {
     ThreadPool pool(4);
     for (int i = 0; i < 10; i++) {
         pool.submit([i]() {
+            lock_guard<mutex> lock(coutMtx);
             cout << "Executing task " << i
                  << " on thread "
                  << this_thread::get_id()
