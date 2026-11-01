@@ -61,7 +61,9 @@ class Topic {
 
 public:
     Topic(const string& n) : name(n) {
-        worker = thread(&Topic::process, this);
+        worker = thread([this](){
+            process();
+        });
     }
 
     ~Topic() {
